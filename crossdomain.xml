@@ -1,0 +1,6 @@
+<cross-domain-policy xsi:noNamespaceSchemaLocation="http://www.adobe.com/xml/schemas/PolicyFile.xsd">
+	<allow-access-from domain="yourdomain.com" />
+	<allow-access-from domain="images.yourdomain.com" />
+	<site-control permitted-cross-domain-policies="master-only" />
+	<allow-http-request-headers-from domain="*.yourdomain.com" headers="*" secure="true" />
+</cross-domain-policy>
