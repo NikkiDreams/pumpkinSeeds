@@ -164,7 +164,8 @@ pks.core = {
 	/** All public interface functions  */
 	api: {
 		pkslog: function (msg){
-			console.log("Fucked: ",msg,pks.core.model.isClassReady,new Date().getTime() );
+			/* TODO: Make Console Logging Congifurable */
+			console.log("PKSLog: ",msg,pks.core.model.isClassReady,new Date().getTime() );
 			/* TODO: Create  pksLogQueue */
 			if(pks.core.model.isClassReady && pks.core.config.isLogger){
 				$(pks.core.config.init_logger).append('<div class="log info">'+ti+" : "+msg+" : "+(new Date().getTime())+'</div>');

@@ -25,11 +25,12 @@ pks.globals = {
 		requestParameters: {},
 		/* TEMPLATES will be dependent on JSRender or JSViews */
 		templates: {
-			PKS: "SOME HTML FRAGMENT",
+			PKS: "<div>SOME HTML FRAGMENT</div>",
 		}
 	},
 	model: {
 		isClassReady: false,
+		isTemplatesReady: false,
 		isModelReady: false,
 		jsonResponse: null,
 		isFormValid: false
@@ -39,9 +40,11 @@ pks.globals = {
 				//var constants = pks.core.globals.constants;
 		},
 		setTemplates: function () {
-			$.templates({
-				pksTemplate: pks.globals.constants.templates.PKS,
-			});
+			if(pks.globals.model.isTemplatesReady){
+				$.templates({
+					pksTemplate: pks.globals.constants.templates.PKS,
+				});
+			}
 		},
 		validators: {},
 		events: {
@@ -49,10 +52,18 @@ pks.globals = {
 				$(document).trigger("pks.globals:isReady");
 				pks.globals.model.isClassReady = true;
 				pks.core.api.pkslog("Event: pks.globals:isReady");
-				//pks.globals.controller.setTemplates();
+				pks.globals.controller.events.templatesReady();
 				//pks.globals.view.setModals();
 				//pks.globals.view.setAlerts();
 				//pks.globals.view.bindEvents();
+			},
+			templatesReady: function () {
+				if(typeof _jsv === 'object'){
+					pks.globals.model.isTemplatesReady = true;
+					pks.core.api.pkslog("Event: pks.globals:isTemplatesReady");
+					$(document).trigger("pks.globals:isTemplatesReady");
+					pks.globals.controller.setTemplates();
+				}
 			}
 		}
 	},
