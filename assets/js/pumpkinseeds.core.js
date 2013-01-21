@@ -25,21 +25,6 @@ pks.core = {
 			pks.core.controller.events.domReady();
 		});
 	},
-	constants: {
-		PUMPKINSEEDS_REST_URL: "/pks/fetish",
-		JSON_ROOT_NODE: "",
-		requestParameters: {
-			PKS_PARAMETER: "pks",
-			USER_PARAMETER: "pksuser"
-		},
-		/* TEMPLATES will are dependant on the JSViews and JSRender
-		* Template fucntionality will wait until I can review the options more closely
-		*/
-		templates: {
-			PKS_HTML: "SOME HTML FRAGMENT"
-		}
-
-	},
 	config: null,
 	model: {
 		isDomReady: false,

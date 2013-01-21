@@ -24,8 +24,12 @@ pks.core.config = {
 		}
 	},
 	constants: {
-		requestParameters: {},
-		templates: null,
+		PUMPKINSEEDS_REST_URL: "/pks/fetish",
+		JSON_ROOT_NODE: "",
+		requestParameters: {
+			PKS_PARAMETER: "pks",
+			USER_PARAMETER: "pksuser"
+		}
 	}
 };
 
