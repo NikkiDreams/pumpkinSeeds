@@ -16,7 +16,7 @@
 
 var pks = Class.create(true);
 pks.namespace('core');
-ti = 0;
+_pksTi = 0;
 pks.core = {
 	init: function () {
 		pks.core.controller.setConstants();
@@ -53,7 +53,6 @@ pks.core = {
 		setConstants: function () {
 				var constants = pks.core.constants;
 		},
-		validators: null,
 		events: {
 			domReady: function () {
 				pks.core.model.isDomReady = true;
@@ -61,7 +60,7 @@ pks.core = {
 			},
 			coreIsReady: function () {
 				pks.core.model.isPksCoreActive = true;
-				pks.core.api.pkslog("Event: pks.core:isReady");
+				pks.core.api.logger("Event: pks.core:isReady");
 				$(document).trigger("pks.core:isReady");
 			},
 			configIsReady: function () {
@@ -71,7 +70,7 @@ pks.core = {
 						&& $(pks.core.config.init_logger).length > 0){
 					pks.core.config.isLogger = true;
 				}
-				pks.core.api.pkslog("Event: pks.core.config:isReady");
+				pks.core.api.logger("Event: pks.core.config:isReady");
 				pks.core.controller.events.coreIsReady();
 				pks.core.controller.events.rootPageDataReady();
 			},
@@ -93,90 +92,46 @@ pks.core = {
 
 			}
 
-		},
-		getRootPageData: function () {
-			$(document).trigger("pks.core:begin");
-			var pksCoreURL = pks.core.controller.getpksCoreURL();
-			if (pksCoreURL === true) {
-				Ajax.Request(pksCoreURL, {
-					method: "get",
-					onComplete: function (response) {
-						pks.core.model.jsonResponse = response.responseJSON[pks.core.constants.JSON_ROOT_NODE];
-						pks.core.controller.events.getRootPageData.success();
-					},
-					onFailure: function (response) {
-						pks.core.model.jsonResponse = response.status;
-						pks.core.controller.events.getRootPageData.exception();
-					}
-				});
-			}
-		},
-		/**
-		* This method constructs the URL used to request the BasePage REST service
-		* */
-		getPksCoreURL: function () {
-			/*var PUMPKINSEEDS_REST_URL = pks.core.constants.PUMPKINSEEDS_REST_URL;*/
-			var constants = pks.core.constants.requestParameters;
-
-			var requestHost = window.location.host;
-			var requestProtocol = "http:";
-			if (window.location.protocol == "http:") {
-				requestProtocol = "http:";
-			} else {
-				requestProtocol = "https:";
-			}
-
-			var userProfileId = null;
-			var USER_PARAMETER = gidLib.getQuerystringParam(pks.core.constants.requestParameters.SEM_PARAMETER, true);
-			userProfileId = USER_PARAMETER;
-
-			var pksCoreURL = requestProtocol + "//" + requestHost + PUMPKINSEEDS_REST_URL + "/" + userProfileId  ;
-			var queryParametersUrlFormatted = pks.core.controller.getQueryParametersUrlFormatted();
-			if (queryParametersUrlFormatted !== null) {
-				pksCoreURL = pksCoreURL + "?" + queryParametersUrlFormatted;
-			}
-
-			return pksCoreURL;
-		},
-		/**
-		* Get any query parameters and append the REST URL string with these params
-		* */
-		getQueryParametersUrlFormatted: function () {
-			var constants = pks.core.constants.requestParameters;
-			var queryParametersUrlFormatted = null;
-			var queryParameters = [];
-			var USER_PARAMETER = gidLib.getQuerystringParam(constants.SEM_PARAMETER, true);
-
-			if (USER_PARAMETER != null && USER_PARAMETER != "") {
-				var USER_PARAMETER_ENCODED = encodeURIComponent(USER_PARAMETER);
-				queryParameters.push(constants.SEM_PARAMETER + "=" + USER_PARAMETER_ENCODED);
-				pks.core.model.defaultUserProfileId = USER_PARAMETER_ENCODED;
-			}
-
-			if (queryParameters.length > 0) {
-				queryParametersUrlFormatted = queryParameters.join("&");
-			}
-
-			return queryParametersUrlFormatted;
 		}
-
 	},
 	/** All public interface functions  */
 	api: {
-		pkslog: function (msg){
+		getFormatedTime: function(){
+			var time = new Date();
+			var hours = time.getHours();
+			var minutes = time.getMinutes();
+			var seconds = time.getSeconds();
+			var milliseconds = time.getMilliseconds();
+			
+			if (hours < 10) {
+				hours = '0' + hours;
+			}
+			if (minutes < 10) {
+				minutes = '0' + minutes;
+			}
+			if (seconds < 10) {
+				seconds = '0' + seconds;
+			}
+			if (milliseconds < 10) {
+				milliseconds = '0' + milliseconds;
+			}
+
+			return hours + ":" + minutes + ":" + seconds + ":" + milliseconds;
+		},
+		logger: function (msg){
 			/* TODO: Make Console Logging Congifurable */
 			console.log("PKSLog: ",msg,pks.core.model.isClassReady,new Date().getTime() );
 			/* TODO: Create  pksLogQueue */
 			if(pks.core.model.isClassReady && pks.core.config.isLogger){
-				$(pks.core.config.init_logger).append('<div class="log info">'+ti+" : "+msg+" : "+(new Date().getTime())+'</div>');
-				ti++;
+				$(pks.core.config.init_logger).append('<div class="log info">'+_pksTi+" : "+msg+" : "+pks.core.api.getFormatedTime()+'</div>');
+				_pksTi++;
 			}
 			else{
 				return;
-			}	
+			}
 		}
-	},
-	view: null
+	}
+	
 };
 
 pks.core.init();
