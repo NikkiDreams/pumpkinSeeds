@@ -1,0 +1,97 @@
+{
+    "API": "Pumpkin Seeds",
+    "version": "1.0.0",
+    "user": {
+        "identity": [
+            "Male",
+            "Female",
+            "Couple",
+            "FM Couple",
+            "MM Couple",
+            "FF Couple",
+            "Group",
+            "Crossdresser/Transvestite",
+            "Trans M2F",
+            "Trans F2M",
+            "Transgender",
+            "Gender Fluid",
+            "Intersex",
+            "Butch",
+            "Femme",
+            "Not Applicable"
+        ],
+        "orientation": [
+            "Straight",
+            "Heterosexual",
+            "Bisexual",
+            "Homoflexible",
+            "Gay",
+            "Lesbian",
+            "Queer",
+            "Pansexual",
+            "Fluctuating/Evolving",
+            "Unsure",
+            "Not Applicable"
+        ],
+        "role": [
+            "Dominant",
+            "Switch",
+            "Submissive",
+            "Master",
+            "Slave",
+            "Top",
+            "Bottom",
+            "Fetishist",
+            "Kinkster",
+            "Sadist",
+            "Masochist",
+            "Experimenting",
+            "Curious"
+        ],
+        "activity": [
+            "giving",
+            "receiving",
+            "giving & receiving",
+            "watching",
+            "wearing",
+            "watching others wear",
+            "everything to do with it",
+            "fantasizing about",
+            "not sure yet"
+        ],
+        "looking": [
+            "LTR",
+            "A mentor/teacher",
+            "New friends",
+            "New playmate(s)",
+            "A master",
+            "A mistress",
+            "A sub, A slave"
+        ],
+        "status": [
+            "Single",
+            "In a relationship",
+            "It's complicated"
+        ],
+        "affinity": [
+            "like it",
+            "love it",
+            "live for it",
+            "tolerate it",
+            "dislike it",
+            "hate it",
+            "hard limit",
+            "no opinion"
+        ],
+        "loe": [
+            "curious about",
+            "beginner",
+            "learning about",
+            "fairly good at",
+            "very good at",
+            "totally expert",
+            "professional",
+            "mentor/teacher"
+        ]
+    }
+}
