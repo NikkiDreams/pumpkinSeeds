@@ -24,7 +24,8 @@ pks.core.config = {
 		}
 	},
 	constants: {
-		PUMPKINSEEDS_REST_URL: "/pks/fetish",
+		PUMPKINSEEDS_REST_URL: "/assets/data/",
+		PUMPKINSEEDS_JSON_DATA: "seeds.json",
 		JSON_ROOT_NODE: "",
 		requestParameters: {
 			PKS_PARAMETER: "pks",

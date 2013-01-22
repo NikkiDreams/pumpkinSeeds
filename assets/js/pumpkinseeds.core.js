@@ -43,11 +43,6 @@ pks.core = {
 				pks.core.model.isDomReady = true;
 				$(document).trigger("pks.dom:isReady");
 			},
-			coreIsReady: function () {
-				pks.core.model.isPksCoreActive = true;
-				pks.core.api.logger("Event: pks.core:isReady");
-				$(document).trigger("pks.core:isReady");
-			},
 			configIsReady: function () {
 				pks.core.model.isClassReady = true;
 				$(document).trigger("pks.core.config:isReady");
@@ -57,26 +52,100 @@ pks.core = {
 				}
 				pks.core.api.logger("Event: pks.core.config:isReady");
 				pks.core.controller.events.coreIsReady();
-				pks.core.controller.events.rootPageDataReady();
 			},
-			rootPageReady: function () {
-				setTimeout(function () {pks.core.controller.getRootPageData(); }, 1000);
+			coreIsReady: function () {
+				pks.core.model.isPksCoreActive = true;
+				pks.core.api.logger("Event: pks.core:isReady");
+				$(document).trigger("pks.core:isReady");
+				pks.core.controller.events.corePageData();
 			},
-			rootPageDataReady: function () {
-				pks.core.model.isRootPageDataReady = true;
+			corePageData: function () {
+				setTimeout(function () { pks.core.controller.getCorePageData(); }, 1000);
 			},
-			getRootPageData: {
+			corePageDataReady: function () {
+				pks.core.model.isCorePageDataReady = true;
+			},
+			getCorePageDataHandler: {
 				success: function () {
+					$(document).trigger("pks.core.data:end");
+					pks.core.api.logger("Event: pks.core.data:end");
+				},
+				complete: function () {
 					pks.core.model.isModelReady = true;
-					pks.core.controller.buildRootPageIndexMap();
+					//pks.core.controller.buildCorePageIndexMap();
 					$(document).trigger("pks.core:isModelReady");
+					pks.core.api.logger("Event: pks.core:isModelReady");
+					//TODO: Move this SOON - it's just temporary
+					var data = pks.core.model.jsonResponse;
+					$("footer").before('<section class="container"><div class="row-fluid"><div class="content span10">'
+						+ '<h2>PKS Core JSON Response</h2>'
+						+ '<label>API Name: ' + data.API + '</label>'
+						+ '<label>API Version: ' + data.version + '</label>'
+						+ '<h5>Sample Data: '+ pks.core.config.constants.PUMPKINSEEDS_JSON_DATA +'</h5>'
+						+ '<label>data.user.identity:<br/>' + JSON.stringify(data.user.identity) + '</label>'
+						+ '<label>data.user.orientation:<br/>' + JSON.stringify(data.user.orientation) + '</label>'
+						+ '<label>data.user.status:<br/>' + JSON.stringify(data.user.status) + '</label>'
+						+'</div></div></section>');
 				},
 				exception: function () {
-					alert("Bad Seeds: Your AJAX Request Failed.");
+					pks.core.model.isModelReady = false;
+					$(document).trigger("pks.core.data:end");
+					pks.core.api.logger("ERROR: Bad Seeds, PKS Core AJAX Request Failed. "+pks.core.model.jsonResponse);
 				}
 
 			}
+		},
+		getCorePageData: function () {
+			$(document).trigger("pks.core.data:begin");
+			pks.core.api.logger("Event: pks.core.data:begin");
 
+			var pksCoreURL = pks.core.controller.getPksCoreURL();
+			var pksCoreURLData = "";
+			if (pksCoreURL != false) {
+				$.getJSON( pksCoreURL )
+					.success(function(){
+						pks.core.controller.events.getCorePageDataHandler.success();
+					})
+					.complete(function (data, textStatus) {
+						pks.core.model.jsonResponse = $.parseJSON(data.responseText);
+						pks.core.controller.events.getCorePageDataHandler.complete();
+					})
+					.error(function (xhr, textStatus, errorThrown) {
+						pks.core.model.jsonResponse = errorThrown;
+						pks.core.controller.events.getCorePageDataHandler.exception();
+					});
+			}
+		},
+		/**
+		* This method constructs the URL used to request a REST service
+		* */
+		getPksCoreURL: function () {
+			var DATA_URL = pks.core.config.constants.PUMPKINSEEDS_REST_URL;
+			var DATA_SET = pks.core.config.constants.PUMPKINSEEDS_JSON_DATA;
+			var constants = pks.core.config.requestParameters;
+
+			var requestHost = window.location.host;
+			var requestProtocol = "http:";
+			if (window.location.protocol == "http:") {
+				requestProtocol = "http:";
+			} else {
+				requestProtocol = "https:";
+			}
+		
+			var pksCoreURL = requestProtocol + "//" + requestHost + DATA_URL + DATA_SET;
+			/*var formatedParamters = pks.api.getQueryParameters();
+			if (formatedParamters !== null) {
+				pksCoreURL = pksCoreURL + "?" + formatedParamters;
+			}
+			*/
+			pks.core.api.logger("INFO: pks.core data url: "+ pksCoreURL);
+			if(pksCoreURL){
+				return pksCoreURL;
+			}
+			else{
+				return false;
+			}
+			
 		}
 	},
 	/** All public interface functions  */
