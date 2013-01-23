@@ -48,7 +48,15 @@ pks.templates = {
 			}
 		}
 	},
-	PKS_TEMPLATE: "<div>SOME HTML FRAGMENT</div>"
+	PKS_TEMPLATE: '<div>SOME HTML FRAGMENT</div>',
+	PKS_DATA_SAMPLE_SECTION: '<section class="container"><div class="row-fluid"><div class="content span10">\								<h2>PKS Core JSON Response</h2> \
+						<label>API Name: {{: +api_name}}</label>\
+						<label>API Version: {{: +api_version}}</label>\
+						<h5>Sample Data: {{: +seed_name}}</h5>\
+						<label>data.user.identity:<br/>{{: +user_identity}}</label>\
+						<label>data.user.orientation:<br/>{{: +user_orientation}}</label>\
+						<label>data.user.status:<br/>{{: +user_status}}</label>\
+						</div></div></section>'
 
 };
 
