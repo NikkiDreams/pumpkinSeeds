@@ -23,6 +23,10 @@ PKS is a proven scaffolding I have used to solve the problems of
 * Easy for new developers to understand and get up and running if you get hit by a bus
 * Nurf War Friendly
 
+## Future Integrations
+* Handlebars 
+* Backbone
+
 
 ## Contributing
 
