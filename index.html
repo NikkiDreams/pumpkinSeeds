@@ -16,14 +16,20 @@
 		<link media="screen" type="text/css" href="assets/css/pumpkinSeeds-responsive.css" rel="stylesheet">
 
 		<!--  TODO: Move this to LESS files -->
+		<!--  BG image borrowed from http://www.insockmonkeyslippers.com/sweetly-spiced-roasted-pumpkin-seed-raisin-snack-mix -->
 		<style>
+
 			body{
-				background:#fff;
+				background:#fff url(/assets/images/pumpkinseeds_bg_large_t.png) no-repeat top center fixed;
+				-webkit-background-size: cover;
+				-moz-background-size: cover;
+				-o-background-size: cover;
+				background-size: cover;
 				font-size:12px;
 				font-family: 'Oxygen', sans-serif;
 				color:#242424;
 				height:auto; 
-				margin-top:100px;
+				margin-top:110px;
 				margin-bottom:40px;
 				padding:0;
 				letter-spacing: 1px;
@@ -136,6 +142,10 @@
 				color:#8AC900;
 				line-height:12px;
 			}
+			.logo > img{
+				border:2px solid #471001;
+				margin-right:20px;
+			}
 
 		</style>
 		<!--  jQuery Library  -->
@@ -160,13 +170,14 @@
 		<script src="assets/js/pumpkinseeds.core.config.js"></script>
 		<script src="assets/js/pumpkinseeds.api.js"></script>
 		<script src="assets/js/pumpkinseeds.templates.js"></script>
-
+<!--  http://www.insockmonkeyslippers.com/sweetly-spiced-roasted-pumpkin-seed-raisin-snack-mix -->
 
 		
 	</head>
-	<body>
+	<body data-seed="seeds.json" class="theme pumpkin">
 		<header class="clearfix">
-			<h1>Pumpkin Seeds</h1>
+			<a href="#" class="logo pull-left" title="Image borrowed from finecooks.com"><img src="/assets/images/pumpkinseeds_logo.jpg" alt="Pumpkin Seeds Logo" data-full-image="/assets/images/pumpkinseeds.jpg" data-original-source="http://finecooks.com/2010/10/cinnamon-spice-pumpkin-seeds-gluten.html"/></a>
+ 			<h1>Pumpkin Seeds</h1>
 		    <div class="navbar navbar-inverse">
 			    <div class="navbar-inner">
 				    <div class="container">
@@ -193,7 +204,7 @@
 									API Calls<span class="caret"></span>
 								</a>
 								<ul class="dropdown-menu">
-		                          <li><a class="apiOne" href="#">Foo</a></li>
+		                          <li><a class="apiOne" href="#">Reload Core Data</a></li>
 		                          <li><a href="#">A Foo</a></li>
 		                          <li><a href="#">You Foo</a></li>
 		                          <li class="divider"></li>
