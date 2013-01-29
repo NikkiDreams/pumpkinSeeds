@@ -65,8 +65,10 @@
         ],
         "status": [
             "Single",
+            "Married",
             "In a relationship",
-            "It's complicated"
+            "It's complicated",
+            "Ack! I want out."
         ],
         "affinity": [
             "like it",

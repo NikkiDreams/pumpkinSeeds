@@ -75,17 +75,13 @@ pks.core = {
 					//pks.core.controller.buildCorePageIndexMap();
 					$(document).trigger("pks.core:isModelReady");
 					pks.core.api.logger("Event: pks.core:isModelReady");
+					
 					//TODO: Move this SOON - it's just temporary
 					var data = pks.core.model.jsonResponse;
-					$("footer").before('<section class="container"><div class="row-fluid"><div class="content span10">'
-						+ '<h2>PKS Core JSON Response</h2>'
-						+ '<label>API Name: ' + data.API + '</label>'
-						+ '<label>API Version: ' + data.version + '</label>'
-						+ '<h5>Sample Data: '+ pks.core.config.constants.PUMPKINSEEDS_JSON_DATA +'</h5>'
-						+ '<label>data.user.identity:<br/>' + JSON.stringify(data.user.identity) + '</label>'
-						+ '<label>data.user.orientation:<br/>' + JSON.stringify(data.user.orientation) + '</label>'
-						+ '<label>data.user.status:<br/>' + JSON.stringify(data.user.status) + '</label>'
-						+'</div></div></section>');
+					pks.core.model.jsonResponse = data;
+					pks.api.prependApiDataObject(data, "footer")
+
+					
 				},
 				exception: function () {
 					pks.core.model.isModelReady = false;
@@ -177,7 +173,7 @@ pks.core = {
 			console.log("PKSLog: ",msg,pks.core.model.isClassReady,new Date().getTime() );
 			/* TODO: Create  pksLogQueue */
 			if(pks.core.model.isClassReady && pks.core.config.isLogger){
-				$(pks.core.config.init_logger).append('<div class="log info">'+_pksTi+" : "+msg+" : "+pks.core.api.getFormatedTime()+'</div>');
+				$(pks.core.config.init_logger).prepend('<div class="log info">'+_pksTi+" : "+msg+" : "+pks.core.api.getFormatedTime()+'</div>');
 				_pksTi++;
 			}
 			else{

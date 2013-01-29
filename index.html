@@ -47,6 +47,7 @@
 				width:100%;
 				margin: 60px 0 0 0;
 				padding:20px;
+				border-top:3px solid #471001;
 			}
 			h1,h2{
 				font-family: 'Ubuntu', sans-serif;
@@ -105,7 +106,8 @@
 			header > .navbar{
 				margin-bottom:0;
 				margin-left:-20px;
-
+				border-top:1px solid #9C2200;
+				border-bottom:3px solid #471001;
 			}
 			header > .navbar > .navbar-inner{	
 				border-radius: 0;
@@ -121,6 +123,18 @@
 			}
 			header > .navbar-inverse .nav > li > a{
 				font-size:14px;
+			}
+
+			.logWrapper{
+				height:200px;
+				overflow:auto;
+			}
+
+			.log.info{
+				font-size:9px;
+				letter-spacing:0;
+				color:#8AC900;
+				line-height:12px;
 			}
 
 		</style>
@@ -174,8 +188,34 @@
 				    <!-- .nav, .navbar-search, .navbar-form, etc -->
 					    <ul class="nav">
 							<li class="active"><a href="#">Home</a></li>
-							<li><a href="#">Foo</a></li>
-							<li><a href="#">Bar</a></li>
+							<li class="dropdown">
+								<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+									API Calls<span class="caret"></span>
+								</a>
+								<ul class="dropdown-menu">
+		                          <li><a class="apiOne" href="#">Foo</a></li>
+		                          <li><a href="#">A Foo</a></li>
+		                          <li><a href="#">You Foo</a></li>
+		                          <li class="divider"></li>
+		                          <li class="nav-header">Foo Header</li>
+		                          <li><a href="#">We Foo</a></li>
+		                          <li><a href="#">They Foo</a></li>
+		                        </ul>
+							</li>
+							<li class="dropdown">
+								<a class="dropdown-toggle" data-toggle="dropdown" href="#">
+									Tests<span class="caret"></span>
+								</a>
+								<ul class="dropdown-menu">
+		                          <li><a href="#">Test</a></li>
+		                          <li><a href="#">Test</a></li>
+		                          <li><a href="#">Test</a></li>
+		                          <li class="divider"></li>
+		                          <li class="nav-header">More Tests</li>
+		                          <li><a href="#">Test</a></li>
+		                          <li><a href="#">Test</a></li>
+		                        </ul>
+							</li>
 						</ul>
 				    </div>
 				     
@@ -196,7 +236,9 @@
 				</div>
 				<div class="content span4">
 					<h2>Init / Event Log</h2>
-					<div id="init_logger"></div>
+					<div class="logWrapper">
+						<div id="init_logger"></div>
+					</div>
 				</div>
 			</div>
 
@@ -210,7 +252,9 @@
 
 		<script>
 			$(document).ready(function(){
-				
+				$("a.apiOne").bind("click",function(){
+					pks.api.prependApiDataObject(pks.core.model.jsonResponse , "footer")
+				});
 			});	
 		</script>
 
