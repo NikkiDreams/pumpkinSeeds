@@ -1,5 +1,7 @@
 ## Pumkin Seeds
 ===========
+# I have not updated in some time. Working too much, me thinks. 
+But I am working on a bunch of updates and upgrades right now. I hope to push them soon.
 
 A Basic Event Driven JS Framework to get any website going fast. It's just a scaffolding using various popular and solid Web technologies I use often.
 
