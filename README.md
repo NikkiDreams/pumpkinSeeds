@@ -3,8 +3,9 @@
 
 A Basic Event Driven JS Framework to get any website going fast. It's just a scaffolding using various popular and solid Web technologies I use often.
 
-**Work in progress - it's not ready for consumption just yet**
-[Pumkin Seeds Example Site](http://pumpkinseeds.nikkidreams.com)
+**Work in progress on Version 1.5 - it's not ready for consumption just yet. It's still very much Alpha/Pre-Alpha code still in the design stages. But it's fun to watch things grow.
+
+**[Pumkin Seeds Example Site](http://pumpkinseeds.nikkidreams.com)
 
 ## Why Pumpkin Seeds - PKS?
 
