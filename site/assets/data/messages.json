@@ -1,0 +1,98 @@
+[{
+  "1432": {
+       "users": {
+          "1234": {
+               "username": "test",
+               "profile_photo":  "http://localhost:8080/assets/images/member_06.jpg"
+           },
+           "5678": {
+                "username": "MissAnn",
+                "profile_photo":  "http://localhost:8080/assets/images/member_01.jpg"
+           }
+       },
+       "messages": [
+               {
+               	   "message_id": 4444,
+                   "sender": "5678",
+                   "recipient": "1234",
+                   "sent":{ 
+						"date":"11/11/12",
+						"time":"05:22 am"
+			 	   	},
+                    "body": "I will destroy you",
+                    "summary": "I will destroy you"
+               },
+               {
+               	   "message_id": 5222,
+                   "sender": "1234",
+                   "recipient": "5678",
+                   "sent":{ 
+						"date":"11/11/12",
+						"time":"11:22 pm"
+			 	   	},
+                    "body": "I know right!",
+                    "summary": "I know right!"
+               	},
+                {
+                   "message_id": 7445,
+                   "sender": "5678",
+                   "recipient": "1234",
+                   "sent":{ 
+						"date":"5/11/12",
+						"time":"5:55 am"
+			 	   	},
+                    "body": "Seriously I will. This is a really long message to display wrapping and stuff. I don't really want to talk to you, just to the layout. More stupid words for this I hope that this looks ok in every browser...I'm looking at you IE everyversion! OK I think I'm done now. Have a nice day.",
+                    "summary": "Seriously I will. This is a really long message to display wrapping and..."
+               	},
+                {
+                   "message_id": 7456,
+                   "sender": "1234",
+                   "recipient": "5678",
+                   "sent":{ 
+						"date":"11/24/12",
+						"time":"07:25 am"
+			 	   	},
+                    "body": "Well I knew that. Good luck!",
+                    "summary": "Well I knew that. Good luck!"
+               	},
+                {
+                   "message_id": 9786,
+                   "sender": "5678",
+                   "recipient": "1234",
+                   "sent":{ 
+						"date":"02/21/12",
+						"time":"11:11 pm"
+			 	   	},
+                    "body": "You think I need luck?",
+                    "summary": "You think I need luck?"
+               	},
+                {
+                   "message_id": 2634,
+                   "sender": "1234",
+                   "recipient": "5678",
+                   "sent":{ 
+						"date":"02/1/12",
+						"time":"03:11 am"
+			 	   	},
+                    "body": "No, please don't hurt me (but really do).",
+                    "summary": "No, please don't hurt me (but really do)."
+               	},
+                {
+                   "message_id": 9346,
+                   "sender": "1234",
+                   "recipient": "5678",
+                   "sent": null,
+                    "body": "It's been so long. Where are you?",
+                    "summary": "It's been so long. Where are you?"
+               	},
+                {
+                   "message_id": 5455,
+                   "sender": "5678",
+                   "recipient": "1234",
+                   "sent": null,
+                    "body": "I'm right behind you...",
+                    "summary": "I'm right behind you..."
+               	}
+       ]
+   }
+}]
