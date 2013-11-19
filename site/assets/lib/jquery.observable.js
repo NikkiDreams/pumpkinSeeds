@@ -1,15 +1,12 @@
-/*! jsObservable: http://github.com/BorisMoore/jsviews */
+/*! JsObservable v1.0.0-alpha: http://github.com/BorisMoore/jsviews and http://jsviews.com/jsviews
+informal pre V1.0 commit counter: 45 (Beta Candidate) */
 /*
  * Subcomponent of JsViews
  * Data change events for data-linking
  *
- * Copyright 2012, Boris Moore and Brad Olenick
+ * Copyright 2013, Boris Moore
  * Released under the MIT License.
  */
-// informal pre beta commit counter: 24b
-
-// TODO, Array change on leaf. Caching compiled templates.
-// TODO later support paths with arrays ~x.y[2].foo, paths with functions on non-leaf tokens: address().street
 
 (function(global, $, undefined) {
 	// global is the this object, which is window when running in the usual browser environment.
@@ -23,21 +20,26 @@
 
 	//========================== Top-level vars ==========================
 
-	var versionNumber = "v1.0pre",
+	var versionNumber = "v1.0.0-alpha",
 
-		$viewsSettings = $.views ? $.views.settings : {},
-		cbBindings,
+		cbBindings, cbBindingsId,
+		$eventSpecial = $.event.special,
+		$viewsSub = $.views ? $.views.sub: {},
+		cbBindingKey = 1,
 		splice = [].splice,
-		concat = [].concat,
 		$isArray = $.isArray,
 		$expando = $.expando,
 		OBJECT = "object",
-		propertyChangeStr = $viewsSettings.propChng = $viewsSettings.propChng || "propertyChange",// These two settings can be overridden on settings after loading
-		arrayChangeStr = $viewsSettings.arrChng = $viewsSettings.arrChng || "arrayChange",        // jsRender, and prior to loading jquery.observable.js and/or JsViews 
+		PARSEINT = parseInt,
+		propertyChangeStr = $viewsSub.propChng = $viewsSub.propChng || "propertyChange",// These two settings can be overridden on settings after loading
+		arrayChangeStr = $viewsSub.arrChng = $viewsSub.arrChng || "arrayChange",        // jsRender, and prior to loading jquery.observable.js and/or JsViews
+		cbBindingsStore = $viewsSub._cbBnds = $viewsSub._cbBnds || {},
 		observeStr = propertyChangeStr + ".observe",
 		$isFunction = $.isFunction,
 		observeObjKey = 1,
-		observeCbKey = 1;
+		observeCbKey = 1,
+		$hasData = $.hasData,
+		rObserveAllFilter = /^_|^jquery/i;
 
 	//========================== Top-level functions ==========================
 
@@ -57,21 +59,10 @@
 		return this;
 	}
 
-	function getObjectOnPath(object, path, offset) {
-		// Returns leaf property unless offset > 0, in which case returns [objectAtOffsetFromLeaf, remainingPath]
-		if (object && path) {
-			var parts = path.split(".");
-			while (object && parts.length > offset) {
-				object = object[parts.shift()];
-			}
-			return offset ? [object, parts.join(".")] : object;
-		}
-	}
-
-	function validateIndex(index) {
-		if (typeof index !== "number") {
-			throw "Invalid index.";
-		}
+	function wrapArray(data) {
+		return $isArray(data)
+			? [data]
+			: data;
 	}
 
 	function resolvePathObjects(paths, root) {
@@ -86,12 +77,13 @@
 		for (i = 0; i < l; i++) {
 			path = paths[i];
 			if ($isFunction(path)) {
-// TODO add support for _parameterized_ calls to depends() on computed observables. Consider getting args by a
-// compiled version of linkFn that just returns the current args. args = linkFnArgs.call(linkCtx, target, view, $views);
-				splice.apply(out, [out.length,1].concat(resolvePathObjects.call(this, path.call(this, root), root)));
+				out = out.concat(resolvePathObjects(path.call(root, root), root));
 				continue;
 			} else if ("" + path !== path) {
 				root = nextObj = path;
+				if (nextObj !== object) {
+					out.push(object = nextObj);
+				}
 				continue;
 			}
 			if (nextObj !== object) {
@@ -102,78 +94,134 @@
 		return out;
 	}
 
-	function onObservableChange(ev, eventArgs) {
-		var ctx = ev.data;
-		if (ctx.prop === "*" || ctx.prop === eventArgs.path) {
-			if (typeof eventArgs.oldValue === OBJECT) {
-				$unobserve.call(ctx.linkCtx, eventArgs.oldValue, ctx.path, ctx.cb);
-			}
-			if (typeof eventArgs.value === OBJECT) {
-				$observe.call(ctx.linkCtx, eventArgs.value, ctx.path, ctx.cb, ctx.root);
-			}
-			ctx.cb.call(ctx.root, ev, eventArgs);
+	function removeCbBindings(cbBindings, cbBindingsId) {
+		// If the cbBindings collection is empty we will remove it from the cbBindingsStore
+		var cb, found;
+
+		for(cb in cbBindings) {
+			found = true;
+			break;
+		}
+		if (!found) {
+			delete cbBindingsStore[cbBindingsId];
 		}
 	}
 
-	$.event.special.propertyChange = {
-		// The jQuery 'off' method does not provide the event data from the event(s) that are being unbound, so we register
-		// a jQuery special 'remove' event, and get the data.cb._bnd from the event here and provide it in the
-		// cbBindings var to the unobserve handler, so we can immediately remove this object from that cb._bnd collection, after 'unobserving'.
-		remove: function(handleObj) {
-			if ((handleObj = handleObj.data) && (handleObj = handleObj.cb)) {
-				cbBindings = handleObj._bnd;
+	function onObservableChange(ev, eventArgs) {
+		if (!(ev.data && ev.data.off)) {
+			// Skip if !!ev.data.off: - a handler that has already been removed (maybe was on handler collection at call time - then removed by another handler)
+			var value = eventArgs.oldValue,
+				ctx = ev.data,
+				paths = ctx.paths;
+			if (ev.type === arrayChangeStr) {
+				(ctx.cb.array || ctx.cb)(ev, eventArgs); // If there is an arrayHandler expando on the regular handler, use it, otherwise use the regular (propertyChange) handler for arrayChange events also...
+				// Note that on data-link bindings we ensure always to have an array handler - $.noop if none is specified e.g. on the data-linked tag.)
+			} else if (ctx.prop === eventArgs.path || ctx.prop === "*") {
+				if (typeof value === OBJECT && (paths[0] || $isArray(value))) { // Note: && (paths[0] || $isArray(value)) is for perf optimization
+					//- (unobserve ongoing path, if not a leaf object, or arrayChange if array)
+					observe_apply(wrapArray(value), paths, ctx.cb, true); // unobserve
+				}
+				if (typeof (value = eventArgs.value) === OBJECT && (paths[0] || $isArray(value))) { // Note: && (paths[0] || $isArray(value)) is for perf optimization
+					observe_apply(wrapArray(value), paths, ctx.cb);
+				}
+				ctx.cb(ev, eventArgs);
 			}
 		}
-	};
+	}
 
 	function $observe() {
-		// $.observable.observe(root, [1 or more objects, path or path Array params...], callback[, resolveDependenciesCallback][, unobserveOrOrigRoot)
-		function observeOnOff(namespace, pathStr) {
-			obIdExpando = object[$expando];
-			if (unobserve) {
+		// $.observe(root, [1 or more objects, path or path Array params...], callback[, contextCallback][, unobserveOrOrigRoot)
+		function observeOnOff(namespace, pathStr, isArrayBinding, off) {
+			var obIdExpando = $hasData(object),
+				boundObOrArr = wrapArray(object);
+			cbBindings = 0;
+			if (unobserve || off) {
 				if (obIdExpando) {
-					$(object).off(namespace, onObservableChange);
-					// We remove this object from that cb._bnd collection (see above).
-
-					// jQuery off event does not provide the event data, with the callback and we need to remove this object from the cb._bnd collection.
-					// So we have registered a jQuery special 'remove' event, which stored the cb._bnd in the cbBindings var,
-					// so we can immediately remove this object from that cb._bnd collection.
-					delete cbBindings[obIdExpando.obId];
+					$(boundObOrArr).off(namespace, onObservableChange);
+					// jQuery off event does not provide the event data, with the callback and we need to remove this object from the corresponding bindings hash, cbBindingsStore[cb._bnd].
+					// So we have registered a jQuery special 'remove' event, which stored the cbBindingsStore[cb._bnd] bindings hash in the cbBindings var,
+					// so we can immediately remove this object from that bindings hash.
+					if (cbBindings) {
+						delete cbBindings[$.data(object, "obId")];
+					}
 				}
 			} else {
-				if (pathStr === "*" && (events = obIdExpando)) {
+				if (events = obIdExpando && $._data(object)) {
 					events = events && events.events;
-					events = events && events.propertyChange;
+					events = events && events[isArrayBinding ? arrayChangeStr : propertyChangeStr];
 					el = events && events.length;
+
 					while (el--) {
-						data = events[el].data;
-						if (data.cb === callback && data.prop !== pathStr) {
-							$(object).off(namespace + "." + data.prop, onObservableChange);
-							// We remove this object from that cb._bnd collection (see above).
-							delete cbBindings[obIdExpando.obId];
+						if ((data = events[el].data) && data.cb._bnd === callback._bnd) {
+							if (isArrayBinding) {
+								// Duplicate exists, so skip. (This can happen e.g. with {^{for people ~foo=people}})
+								return;
+							} else if (pathStr === "*" && data.prop !== pathStr || data.prop === prop) {
+								$(object).off(namespace, onObservableChange);
+									// We remove this object from bindings hash (see above).
+								if (cbBindings) {
+									delete cbBindings[$.data(object, "obId")];
+								}
+							}
 						}
 					}
 				}
-				$($isArray(object) ? [object] : object).on(namespace, null, {linkCtx: linkCtx, root: origRoot, path: pathStr, prop: prop, cb: callback}, onObservableChange);
+
+				$(boundObOrArr).on(namespace, null, isArrayBinding ? { cb: callback } : { fullPath: path, paths: pathStr ? [pathStr] : [], prop: prop, cb: callback }, onObservableChange);
+
 				if (bindings) {
 					// Add object to bindings, and add the counter to the jQuery data on the object
-					obIdExpando = object[$expando];
-					bindings[obIdExpando.obId = obIdExpando.obId || observeObjKey++] = object;
+					bindings[$.data(object, "obId") || $.data(object, "obId", observeObjKey++)] = object;
 				}
 			}
 		}
 
-		var i, parts, prop, path, dep, object, unobserve, callback, cbNs, el, data, events, filter, items, bindings, obIdExpando, depth,
+		function onUpdatedExpression(exprOb, paths) {
+			// Use the contextCb callback to execute the compiled exprOb template in the context of the view/data etc. to get the returned value, typically an object or array.
+			// If it is an array, register array binding
+			exprOb._ob = contextCb(exprOb, origRoot);
+			var origRt = origRoot;
+			return function(ev, eventArgs) {
+				var obj = exprOb._ob,
+					len = paths.length;
+				if (typeof obj === OBJECT) {
+					bindArray(obj, true);
+					if (len || $.isArray(obj)) {
+						observe_apply(obj, paths, callback, contextCb, true); // unobserve
+					}
+				}
+				obj = exprOb._ob = contextCb(exprOb, origRt);
+				// Put the updated object instance onto the exprOb in the paths array, so subsequent string paths are relative to this object
+				if (typeof obj === OBJECT) {
+					bindArray(obj);
+					if (len || $.isArray(obj)) {
+						observe_apply(obj, paths, callback, contextCb, origRt);
+					}
+				}
+				callback(ev, eventArgs);
+			}
+		}
+
+		function bindArray(arr, unbind, isArray) {
+			if (isArray||$.isArray(arr)) {
+				// This is a data-bound tag which has an onArrayChange handler, e.g. {^{for}}, and the leaf object is an array
+				// - so we add the arrayChange binding
+				var prevObj = object;
+				object = arr;
+				observeOnOff(arrayChangeStr + ".observe" + (callback? ".obs" + callback._bnd : ""), undefined, true, unbind);
+				object = prevObj;
+			}
+		}
+
+		var i, p, skip, parts, prop, path, isArray, dep, unobserve, callback, cbId, el, data, events, contextCb, items, bindings, depth, innerCb,
 			topLevel = 1,
 			ns = observeStr,
-			paths = concat.apply([], arguments),	// flatten the arguments
+			paths = Array.apply(0, arguments),
 			lastArg = paths.pop(),
-			origRoot = paths[0],
-			root = "" + origRoot !== origRoot ? paths.shift() : undefined,	// First parameter is the root object, unless a string
-			linkCtx = this,
+			origRoot = paths.shift(),
+			root =origRoot,
+			object = root,
 			l = paths.length;
-
-		origRoot = root;
 
 		if ($isFunction(lastArg)) {
 			callback = lastArg;
@@ -186,39 +234,41 @@
 			}
 			lastArg = paths[l-1];
 			if (l && lastArg === undefined || $isFunction(lastArg)) {
-				callback = paths.pop(); // If preceding is callback this will be filter param - which may be undefined
+				callback = paths.pop(); // If preceding is callback this will be contextCb param - which may be undefined
 				l--;
 			}
 		}
-		if ($isFunction(paths[l-1])) {
-			filter = callback;
+		if (l && $isFunction(paths[l-1])) {
+			contextCb = callback;
 			callback = paths.pop();
 			l--;
 		}
 
-		// Use a unique namespace, cbNs, (e.g. obs7) associated with each observe() callback to allow unobserve to
-		// remove onObservableChange handlers that wrap that callback
-		ns += unobserve
-			? (callback ? "." + callback.cbNs : "")
-			: "." + (callback.cbNs = callback.cbNs || "obs" + observeCbKey++);
-		cbNs = callback && callback.cbNs;
+		if ($.isArray(root)) {
+			bindArray(root, unobserve, true);
+		} else {
+			// Use a unique namespace (e.g. obs7) associated with each observe() callback to allow unobserve to
+			// remove onObservableChange handlers that wrap that callback
+			ns += unobserve
+				? (callback ? ".obs" + callback._bnd: "")
+				: ".obs" + (cbId = callback._bnd = callback._bnd || observeCbKey++);
 
-		if (unobserve && l === 0 && root) {
-			// unobserve(object) TODO what if there is a callback specified
-			$(root).off(observeStr, onObservableChange);
+			if (unobserve && l === 0 && root) {
+					observeOnOff(ns, "");
+			}
 		}
-		bindings = callback
-			? topLevel
-				? (callback._bnd = callback._bnd || {})
-				: callback._bnd
-			: undefined;
-
+		if (!unobserve) {
+			bindings = cbBindingsStore[cbId] = cbBindingsStore[cbId] || {};
+		}
 		depth = 0;
 		for (i = 0; i < l; i++) {
 			path = paths[i];
+			if (path === "") {
+				continue;
+			}
 			object = root;
 			if ("" + path === path) {
-				//path = path || "*"; // This ensures that foo(person) will depend on any changes in foo
+				//path = path || "*"; // This ensures that foo(person) will depend on any changes in person
 				// - equivalent to foo(person.*) - were it legal, or to adding foo.depends = []
 				parts = path.split("^");
 				if (parts[1]) {
@@ -229,8 +279,8 @@
 					depth = path.split(".").length - depth;
 						// if more than one ^ in the path, the first one determines depth
 				}
-				if (filter && (items = filter(path, root))) {
-					// If filter returns an array of objects and paths, we will insert them
+				if (contextCb && (items = contextCb(path, root))) {
+					// If contextCb returns an array of objects and paths, we will insert them
 					// into the sequence, replacing the current item (path)
 					l += items.length - 1;
 					splice.apply(paths, [i--, 1].concat(items));
@@ -238,66 +288,94 @@
 				}
 				parts = path.split(".");
 			} else {
-				root = path;
 				if (topLevel && !$isFunction(path)) {
-					origRoot = root; // For top-level calls, objects in the paths array become the origRoot for subsequent paths.
-				}
-				parts = [path];
-			}
-			while (object && typeof object === "object" && (prop = parts.shift())) {
-				if ("" + prop === prop) {
-					if ((parts.length < depth + 1) && !object.nodeType) {
-						// Add observer for each token in path starting at depth, and on to the leaf
-						if (!unobserve && (events = object[$expando])) {
-							events = events.events;
-							events = events && events.propertyChange;
-							el = events && events.length;
-							while (el--) { // Skip duplicates
-								data = events[el].data;
-								if (data && data.cb === callback && ((data.prop === prop && data.path === parts.join(".")) || data.prop === "*")) {
-									break;
-								}
-							}
-							if (el > -1) {
-								// Duplicate binding found, so move on
-								object = object[prop];
-								continue;
-							}
+					if (path._jsvOb) {
+						if (!unobserve) {
+							// This is a compiled function for binding to an object returned by a helper/data function.
+							path._cb = innerCb = onUpdatedExpression(path, paths.slice(i+1));
+							path._rt = origRoot;
+							innerCb._bnd = callback._bnd; // Set the same cbBindingsStore key as for callback, so when callback is disposed, disposal of innerCb happens too.
 						}
-						if (prop === "*" || prop === "") {
-					//		prop = "*";
-							if ($isFunction(object)) {
-								if (dep = object.depends) {
-									$observe.call(this, dep, callback, unobserve||origRoot);
+						observe_apply(path._rt, paths.slice(0, i), path._cb, contextCb, unobserve);
+						path = path._ob;
+					}
+					object = path; // For top-level calls, objects in the paths array become the origRoot for subsequent paths.
+				}
+				root = path;
+				parts = [root];
+			}
+			while (object && (prop = parts.shift()) !== undefined) {
+				if (typeof object === OBJECT) {
+					if ("" + prop === prop) {
+						if (prop === "") {
+							continue;
+						}
+						if ((parts.length < depth + 1) && !object.nodeType) {
+							// Add observer for each token in path starting at depth, and on to the leaf
+							if (!unobserve && (events = $hasData(object) && $._data(object))) {
+								events = events.events;
+								events = events && events.propertyChange;
+								el = events && events.length;
+								skip = 0;
+								while (el--) { // Skip duplicates
+									data = events[el].data;
+									if (data && data.cb === callback) {
+										if (data.prop === prop || data.prop === "*") {
+											if (p = parts.join(".")) {
+												data.paths.push(p); // We will skip this binding, but if it is not a leaf binding,
+												// need to keep bindings rest of path, ready for if the object gets swapped.
+											}
+											skip++;
+										}
+									}
 								}
-							} else {
-								observeOnOff(ns, prop);
+								if (skip) {
+									// Duplicate binding(s) found, so move on
+									object = object[prop];
+									continue;
+								}
 							}
-							break;
-						} else {
-							dep = object[prop];
-							dep = $isFunction(dep) && dep.depends;
-							if (!dep) {
-								// If leaf is a computed observable (function with declared dependencies) we do not
-								// currently observe 'swapping' of the observable - only changes in its dependencies.
+							if (prop === "*") {
+								if (!unobserve && events && events.length) {
+									// Remove existing bindings, since they will be duplicates with "*"
+									observeOnOff(ns, "", false, true);
+								}
+								if ($isFunction(object)) {
+									if (dep = object.depends) {
+										observe_apply(dep, callback, unobserve||origRoot);
+									}
+								} else {
+									observeOnOff(ns, "");
+								}
+								for (p in object) {
+									// observing "*" listens to any prop change, and also to arraychange on props of type array
+									bindArray(object[p], unobserve);
+								}
+								break;
+							} else if (prop) {
 								observeOnOff(ns + "." + prop, parts.join("."));
 							}
 						}
+						prop = object[prop];
 					}
-					prop = object[prop];
-				}
-				if ($isFunction(prop)) {
-					if (dep = prop.depends) {
-						// This is a computed observable. We will observe any declared dependencies
-						$observe.call(this, object, resolvePathObjects.call(this, dep, object), callback, filter, unobserve||origRoot);
+					if ($isFunction(prop)) {
+						if (dep = prop.depends) {
+							// This is a computed observable. We will observe any declared dependencies
+							observe_apply(object, resolvePathObjects(dep, object), callback, contextCb, unobserve||origRoot);
+						}
+						break;
 					}
-					break;
+					object = prop;
 				}
-				object = prop;
 			}
+			bindArray(object, unobserve);
 		}
-		// Return the bindings to the top-level caller, along with the cbNs
-		return { cbNs: cbNs, bnd: bindings };
+		if (cbId) {
+			removeCbBindings(bindings, cbId);
+		}
+
+		// Return the bindings to the top-level caller, along with the cbId
+		return { cbId: cbId, bnd: bindings, leaf: object };
 	}
 
 	function $unobserve() {
@@ -305,70 +383,145 @@
 		return $observe.apply(this, arguments);
 	}
 
+	function observe_apply() {
+		// $.observe(), but allowing you to include arrays within the arguments - which you want flattened.
+		return $observe.apply(0, [].concat.apply([], arguments)); // Flatten the arguments
+	}
+
 	//========================== Initialize ==========================
 
+	function $observeAll(cb) {
+		observeAll(this._data, cb);
+	}
+
+	function $unobserveAll(cb) {
+		observeAll(this._data, cb, true);
+	}
+
+	function observeAll(object, cb, unobserve, filter) {
+		function wrappedCb(ev, eventArgs) {
+				switch (eventArgs.change) {
+				case "insert":
+					observeAll(eventArgs.items, cb, false, 0);
+					break;
+				case "remove":
+					observeAll(eventArgs.items, cb, true, 0);
+					break;
+				case "refresh":
+					observeAll(eventArgs.oldItems, cb, true, 0);
+					observeAll(ev.target, cb, false, 0);
+					break;
+				case "set":
+					observeAll(eventArgs.oldValue, cb, true, 0);
+					observeAll(eventArgs.value, cb, false, 0);
+			}
+			cb.apply(this, arguments);
+		}
+
+		var l, prop,
+			isObject = $.isArray(object) ? "" : "*"; // The path string for binding all properties of an object
+
+		if (typeof object === OBJECT) {
+			if (cb) {
+				if (isObject || filter !== 0) {
+					// If an object, observe the object. If an array, only add arrayChange binding if this is a top-level call (filter !== 0),
+					// since array properties lower in the tree get arrayChange binding added during regular $.observe(array ...) binding.
+					wrappedCb._bnd = cb._bnd; // Identify wrapped callback with unwrapped callback, so unobserveAll will
+					// remove previous observeAll wrapped callback, if inner callback was the same;
+					$observe(object, isObject, wrappedCb, unobserve);
+					cb._bnd = wrappedCb._bnd; // Identify wrapped callback with unwrapped callback
+				}
+			} else {
+				$observe(object, isObject, undefined, unobserve);
+			}
+
+			if (isObject) {
+				filter = filter || $observable.filter; // To override pass in filter parameter, or replace $.observable.filter
+				for (l in object) {
+					observeAll((filter||observeAllFilter)(l, object), cb, unobserve, 0);
+				}
+			} else {
+				l = object.length;
+				while (l--) {
+					observeAll(object[l], cb, unobserve, 0);
+				}
+			}
+		}
+	}
+
+	function observeAllFilter(key, object) {
+		if (!rObserveAllFilter.test(key)) {
+			var prop = object[key];
+			return prop + "" !== prop && $.isFunction(prop)
+				? prop.set && prop.call(object) // It is a getter/setter
+				: prop;
+		}
+	}
+
 	$.observable = $observable;
+	$observable.filter = observeAllFilter;
 	$observable.Object = ObjectObservable;
 	$observable.Array = ArrayObservable;
-	$observable.observe = $observe;
-	$observable.unobserve = $unobserve;
+	$.observe = $observable.observe = $observe;
+	$.unobserve = $observable.unobserve = $unobserve;
+	$observable._apply = observe_apply;
 
 	ObjectObservable.prototype = {
 		_data: null,
+
+		observeAll: $observeAll,
+		unobserveAll: $unobserveAll,
 
 		data: function() {
 			return this._data;
 		},
 
-		observe: function(paths, callback) {
-			return $observe(this._data, paths, callback);
-		},
+		setProperty: function(path, value, nonStrict) {
+			var leaf, key, pair, parts,
+				self = this,
+				object = self._data;
 
-		unobserve: function(paths, callback) {
-			return $unobserve(this._data, paths, callback);
-		},
-
-		setProperty: function(path, value) { // TODO in the case of multiple changes (object): raise single propertyChanges event
-			// (which may span different objects, via paths) with set of changes.
-			var leaf, key, pair,
-				self = this;
-
-			if ($isArray(path)) {
-				// This is the array format generated by serializeArray. However, this has the problem that it coerces types to string,
-				// and does not provide simple support of convertTo and convertFrom functions.
-				// TODO: We've discussed an "objectchange" event to capture all N property updates here. See TODO note above about propertyChanges.
-				key = path.length;
-				while (key--) {
-					pair = path[key];
-					self.setProperty(pair.name, pair.value);
+			path = path || "";
+			if (object) {
+				if ($isArray(path)) {
+					// This is the array format generated by serializeArray. However, this has the problem that it coerces types to string,
+					// and does not provide simple support of convertTo and convertFrom functions.
+					key = path.length;
+					while (key--) {
+						pair = path[key];
+						self.setProperty(pair.name, pair.value, nonStrict === undefined || nonStrict) //If nonStrict not specified, default to true;
+					}
+				} else if ("" + path !== path) {
+					// Object representation where property name is path and property value is value.
+					for (key in path) {
+						self.setProperty(key, path[key], value);
+					}
+				} else if (path.indexOf($expando) < 0) {
+					// Simple single property case.
+					parts = path.split(".");
+					while (object && parts.length > 1) {
+						object = object[parts.shift()];
+					}
+					self._setProperty(object, parts.join("."), value, nonStrict);
 				}
-			} else if ("" + path !== path) {
-				// Object representation where property name is path and property value is value.
-				// TODO: We've discussed an "objectchange" event to capture all N property updates here. See TODO note above about propertyChanges.
-				for (key in path) {
-					self.setProperty(key, path[key]);
-				}
-			} else if ((leaf = getObjectOnPath(self._data, path, 1)) && path !== $expando) {
-				// Simple single property case.
-				self._setProperty(leaf[0], leaf[1], value);
 			}
 			return self;
 		},
 
-		_setProperty: function(leaf, path, value) {
+		_setProperty: function(leaf, path, value, nonStrict) {
 			var setter, getter,
-				property = leaf[path];
+				property = path ? leaf[path] : leaf;
 
 			if ($isFunction(property)) {
 				if (property.set) {
 					// Case of property setter/getter - with convention that property is getter and property.set is setter
 					getter = property;
 					setter = property.set === true ? property : property.set;
-					property = property.call(leaf); //get
+					property = property.call(leaf); // get - only treated as getter if also a setter. Otherwise it is simply a property of type function. See unit tests 'Can observe properties of type function'.
 				}
 			}
 
-			if (property != value) { // test for non-strict equality, since serializeArray, and form-based editors can map numbers to strings, etc.
+			if (property !== value || nonStrict && property != value) { // Optional non-strict equality, since serializeArray, and form-based editors can map numbers to strings, etc.
 				// Date objects don't support != comparison. Treat as special case.
 				if (!(property instanceof Date) || property > value || property < value) {
 					if (setter) {
@@ -377,7 +530,7 @@
 					} else {
 						leaf[path] = value;
 					}
-					this._trigger(leaf, {path: path, value: value, oldValue: property});
+					this._trigger(leaf, {change: "set", path: path, value: value, oldValue: property});
 				}
 			}
 		},
@@ -390,16 +543,24 @@
 	ArrayObservable.prototype = {
 		_data: null,
 
+		observeAll: $observeAll,
+		unobserveAll: $unobserveAll,
+
 		data: function() {
 			return this._data;
 		},
 
 		insert: function(index, data) {
-			validateIndex(index);
-
-			if (arguments.length > 1) {
-				data = $isArray(data) ? data : [data];  // TODO: Clone array here?
+			var _data = this._data;
+			if (arguments.length === 1) {
+				data = index;
+				index = _data.length;
+			}
+			index = PARSEINT(index);
+			if (index > -1 && index <= _data.length) {
+				data = $isArray(data) ? data : [data];
 				// data can be a single item (including a null/undefined value) or an array of items.
+				// Note the provided items are inserted without being cloned, as direct references to the provided objects
 
 				if (data.length) {
 					this._insert(index, data);
@@ -409,16 +570,24 @@
 		},
 
 		_insert: function(index, data) {
-			splice.apply(this._data, [index, 0].concat(data));
-			this._trigger({change: "insert", index: index, items: data});
+			var _data = this._data,
+				oldLength = _data.length;
+			splice.apply(_data, [index, 0].concat(data));
+			this._trigger({change: "insert", index: index, items: data}, oldLength);
 		},
 
 		remove: function(index, numToRemove) {
-			validateIndex(index);
+			var items,
+				_data = this._data;
 
-			numToRemove = (numToRemove === undefined || numToRemove === null) ? 1 : numToRemove;
-			if (numToRemove && index > -1) {
-				var items = this._data.slice(index, index + numToRemove);
+			if (index === undefined) {
+				index = _data.length - 1;
+			}
+
+			index = PARSEINT(index);
+			numToRemove = numToRemove ? PARSEINT(numToRemove) : numToRemove === 0 ? 0 : 1; // if null or undefined: remove 1
+			if (numToRemove > -1 && index > -1) {
+				items = _data.slice(index, index + numToRemove);
 				numToRemove = items.length;
 				if (numToRemove) {
 					this._remove(index, numToRemove, items);
@@ -428,26 +597,34 @@
 		},
 
 		_remove: function(index, numToRemove, items) {
-			this._data.splice(index, numToRemove);
-			this._trigger({change: "remove", index: index, items: items});
+			var _data = this._data,
+				oldLength = _data.length;
+
+			_data.splice(index, numToRemove);
+			this._trigger({change: "remove", index: index, items: items}, oldLength);
 		},
 
 		move: function(oldIndex, newIndex, numToMove) {
-			validateIndex(oldIndex);
-			validateIndex(newIndex);
+			numToMove = numToMove ? PARSEINT(numToMove) : numToMove === 0 ? 0 : 1; // if null or undefined: move 1
+			oldIndex = PARSEINT(oldIndex);
+			newIndex = PARSEINT(newIndex);
 
-			numToMove = (numToMove === undefined || numToMove === null) ? 1 : numToMove;
-			if (numToMove) {
+			if (numToMove > 0 && oldIndex > -1 && newIndex > -1 && oldIndex !== newIndex) {
 				var items = this._data.slice(oldIndex, oldIndex + numToMove);
-				this._move(oldIndex, newIndex, numToMove, items);
+				numToMove = items.length;
+				if (numToMove) {
+					this._move(oldIndex, newIndex, numToMove, items);
+				}
 			}
 			return this;
 		},
 
 		_move: function(oldIndex, newIndex, numToMove, items) {
-			this._data.splice( oldIndex, numToMove );
-			this._data.splice.apply( this._data, [ newIndex, 0 ].concat( items ) );
-			this._trigger( { change: "move", oldIndex: oldIndex, index: newIndex, items: items } );
+			var _data = this._data,
+				oldLength = _data.length;
+			_data.splice(oldIndex, numToMove);
+			_data.splice.apply(_data, [newIndex, 0].concat(items));
+			this._trigger({change: "move", oldIndex: oldIndex, index: newIndex, items: items}, oldLength);
 		},
 
 		refresh: function(newItems) {
@@ -457,12 +634,40 @@
 		},
 
 		_refresh: function(oldItems, newItems) {
-			splice.apply(this._data, [0, this._data.length].concat(newItems));
-			this._trigger({change: "refresh", oldItems: oldItems});
+			var _data = this._data,
+				oldLength = _data.length;
+
+			splice.apply(_data, [0, _data.length].concat(newItems));
+			this._trigger({change: "refresh", oldItems: oldItems}, oldLength);
 		},
 
-		_trigger: function(eventArgs) {
-			$([this._data]).triggerHandler(arrayChangeStr, eventArgs);
+		_trigger: function(eventArgs, oldLength) {
+			var _data = this._data,
+				length = _data.length,
+				$data = $([_data]);
+
+			$data.triggerHandler(arrayChangeStr, eventArgs);
+			if (length !== oldLength) {
+				$data.triggerHandler(propertyChangeStr, {change: "set", path: "length", value: length, oldValue: oldLength});
+			}
+		}
+	};
+
+	$eventSpecial[propertyChangeStr] = $eventSpecial[arrayChangeStr] = {
+		// The jQuery 'off' method does not provide the event data from the event(s) that are being unbound, so we register
+		// a jQuery special 'remove' event, and get the data.cb._bnd from the event here and provide the corresponding cbBindings hash via the
+		// cbBindings var to the unobserve handler, so we can immediately remove this object from that bindings hash, after 'unobserving'.
+		remove: function(evData) {
+			if ((evData = evData.data) && (evData.off = 1, evData = evData.cb)) { //Set off=1 as marker for disposed event
+				// Get the cb._bnd from ev.data.cb._bnd
+				cbBindings = cbBindingsStore[cbBindingsId = evData._bnd];
+			}
+		},
+		teardown: function(namespaces) {
+			if (cbBindings) {
+				delete cbBindings[$.data(this, "obId")];
+				removeCbBindings(cbBindings, cbBindingsId);
+			}
 		}
 	};
 })(this, this.jQuery || this.jsviews);

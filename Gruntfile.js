@@ -27,7 +27,7 @@ module.exports = function(grunt) {
 	var gzip = require( "gzip-js" ),
 		srcHintOptions = readOptionalJSON( "<%= pkg.directories.src.js %>/.jshintrc" );
 
-	grunt.log.write(" ------------------------------------------------ ^ Hi! ^ \n ");
+	grunt.log.write(" ---- ^ Hi! ^ -------------------------------------------- \n ");
 
 	grunt.initConfig({
 		pkg: grunt.file.readJSON('package.json'),
@@ -140,7 +140,7 @@ module.exports = function(grunt) {
 				files: [{
 						expand: true,        // Enable dynamic expansion.
 						cwd: '<%= pkg.directories.src.less %>',  // Src matches are relative to this path.
-						src: ['<%= pkg.name %>.less','<%= pkg.name %>-responsive.less'],     // Actual pattern(s) to match.
+						src: ['<%= pkg.name %>.less'],     // Actual pattern(s) to match.
 						dest: '<%= pkg.directories.dist.loc %>/css',  // Destination path prefix.
 						ext: '-<%= pkg.version %>.css'         // Dest filepaths will have this extension.
 				}]
@@ -226,7 +226,7 @@ module.exports = function(grunt) {
 			html: {
 				// The path 'less/**/*.less' will expand to match every less file in
 				// the less directory.
-				files: [ '<%= pkg.directories.src.loc %>/index.html' ],
+				files: [ '<%= pkg.directories.src.loc %>/**/*.html' ],
 				// The tasks to run
 				tasks: [ 'copy:html', 'sed:html' ]
 			},
@@ -294,6 +294,6 @@ module.exports = function(grunt) {
 
 	
 
-	grunt.log.write(" ------------------------------------------------ ^ Bye! ^ \n");
+	grunt.log.write(" ---- ^ Bye! ^ -------------------------------------------- \n");
 
 };
