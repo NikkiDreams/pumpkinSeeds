@@ -109,8 +109,6 @@ pks.core = {
 					//TODO: Move this SOON - it's just temporary
 					var data = pks.core.model.jsonResponse;
 					pks.core.model.jsonResponse = data;
-					pks.api.prependApiDataObject(data, 'footer');
-					
 				},
 				exception: function () {
 					pks.core.model.isModelReady = false;
@@ -216,6 +214,10 @@ pks.core = {
 
 pks.core.init();
 
+$.fn.exists = function () {
+	return jQuery(this).length > 0;
+};
+
 ;/* Pumpkin Seeds Core Config 
  * This Class is used to setup and initialize the core components
  * @author Nichole Shannon
@@ -276,7 +278,8 @@ pks.api = {
 	},
 	constants: {
 		requestParameters: {},
-		en_us:{}
+		en_us:{},
+		pks_base_container: '#pks_core_container'
 	},
 	model: {
 		isClassReady: false,
@@ -290,6 +293,10 @@ pks.api = {
 				$(document).trigger('pks.api:isReady');
 				pks.api.model.isClassReady = true;
 				pks.core.api.logger('Event: pks.api:isReady');
+				$(document).on('pks.core:isModelReady', function(){
+					pks.api.prependApiDataObject(pks.core.model.jsonResponse);
+				});
+				
 			}
 		}
 	},
@@ -332,30 +339,43 @@ pks.api = {
 
 		return pksCoreURL;
 	},
+	createViewContainer: function(id, styleClass, target){
+		var tObj = (target)?target:'#top_section',
+			baseId = (id)?id:'pks_core_container',
+			style = (styleClass)?' '+styleClass:'',
+			baseContainer = '\
+				<section class="container'+style+'" id="'+baseId+'">\
+					<div class="row"></div>\
+				</section>';
+		
+		if( $(tObj).exists() && !$('#'+baseId).exists() ){
+			$(tObj).after(baseContainer);
+			return true;
+		}
+		else if( !$(tObj).exists() ){
+			return false;
+		}
+		return true;
+	},
 	/* Sample API Call to destroy and rewrite the initial API Core JSON Sample */
-	prependApiDataObject:function(data, obj){
-		//TODO: JS Templatize this using JSViews or Handlebars
-		var content = '<section class="container" id="pks_core_JSON_sample"><div class="row-fluid"><div class="content span10">\
-			<h2>PKS Core JSON Response</h2>\
-			<label>API Name: ' + data.API + '</label>\
-			<label>API Version: ' + data.version + '</label>\
-			<h5>Sample Data: '+ pks.core.config.constants.PUMPKINSEEDS_JSON_DATA +'</h5>\
-			<label>data.geolocation.country.USA.states:<br/><pre>' + JSON.stringify(data.geolocation.country.USA.states) + '</pre></label>\
-			<label>data.user.identity:<br/><pre>' + JSON.stringify(data.user.identity) + '</pre></label>\
-			<label>data.user.orientation:<br/><pre>' + JSON.stringify(data.user.orientation) + '</pre></label>\
-			<label>data.user.status:<br/><pre>' + JSON.stringify(data.user.status) + '</pre></label>\
-			</div></div></section>';
+	prependApiDataObject:function(model){
+		var data =  {
+				'API': model.API,
+				'version': model.version,
+				'seed_name': pks.core.config.constants.PUMPKINSEEDS_JSON_DATA,
+				'geolocation': JSON.stringify(model.geolocation.country.USA.states),
+				'identity': JSON.stringify(model.user.identity),
+				'orientation': JSON.stringify(model.user.orientation),
+				'status': JSON.stringify(model.user.status),
+				'contentId': 'api_json_data',
+				'extraStyle': ''
+			},
+			myTemplate = $.templates(pks.templates.PKS_API_DATA_SAMPLE_SECTION),
+			html = myTemplate.render(data),
+			containerId = 'pks_core_examples',
+			targetContainer = pks.api.createViewContainer(containerId,null,null);
 
-		if( document.getElementById('pks_core_JSON_sample') ){
-			$('#pks_core_JSON_sample').fadeOut('slow', function(){
-				$(this).remove();
-				$(obj).before(content);
-			});
-		}
-		else{
-			$(obj).before(content);
-		}
-
+		$('#'+containerId+' > .row:first-child').prepend(html);
 		pks.core.api.logger('API: pks.prependApiDataObject');
 	}
 
@@ -438,17 +458,175 @@ pks.templates = {
 		}
 	},
 	PKS_TEMPLATE: '<div>SOME HTML FRAGMENT</div>',
-	PKS_DATA_SAMPLE_SECTION: '<section class="container"><div class="row"><div class="content  col-md-16">\
-						<h2>PKS Core JSON Response</h2> \
-						<label>API Name: {{: +api_name}}</label>\
-						<label>API Version: {{: +api_version}}</label>\
-						<h5>Sample Data: {{: +seed_name}}</h5>\
-						<label>data.user.identity:<br/>{{: +user_identity}}</label>\
-						<label>data.user.orientation:<br/>{{: +user_orientation}}</label>\
-						<label>data.user.status:<br/>{{: +user_status}}</label>\
-						</div></div></section>'
+	PKS_API_DATA_SAMPLE_SECTION: '\
+		<div class="col-md-10 {{: extraStyle }}" id="{{: contentId }}">\
+			<div class="content">\
+				<h2>PKS Core JSON Response</h2> \
+				<label>API Name: {{: API }}</label>\
+				<label>API Version: {{: version }}</label>\
+				<h5>Sample Data: {{: seed_name }}</h5>\
+				<label>data.geolocation.country.USA.states:<br/><pre>{{: geolocation }}</pre></label>\
+				<label>data.user.identity:<br/><pre>{{: identity }}</pre></label>\
+				<label>data.user.orientation:<br/><pre>{{: orientation }}</pre></label>\
+				<label>data.user.status:<br/><pre>{{: status }}</pre></label>\
+			</div>\
+		</div>',
+	PKS_LASTFM_CURRENT_SONG_PLAYING: '\
+		<div class="col-md-5 {{: extraStyle }}" id="{{: contentId }}">\
+			<div class="nowplaying content  clearfix">\
+		        <div class="nowPlayingBg cssBGfilters full-width-overlay">\
+		            <div class="art" style="background-image: url({{: tracks[0].images.extralarge}});"></div>\
+		        </div>\
+		        <div class="track-details-wrapper" data-utc="{{: tracks[0].utc}}">\
+	                <div class="track-details">\
+	                    <a class="artwork media-pull-left media-link-hook" href="{{: tracks[0].url}}">\
+	                        <img src="{{: tracks[0].images.mega}}" alt="Artwork for {{: tracks[0].name}}" />\
+	                    </a>\
+	                    <div class="media-body">\
+                            <div class="vertically-center track-meta">\
+                                <h3 class="now-playing-subtext">\
+                                    <a href="{{: _meta.subject.url}}" class="strong">{{: _meta.subject.name}}</a> is playing\
+                                    <a href="{{: _meta.subject.url}}" class="strong hide">{{: _meta.subject.name}}</a> <span class="hide">just played</span>\
+                                    <a href="{{: _meta.subject.url}}" class="strong hide">{{: _meta.subject.name}}</a> <span class="hide">last played</span>\
+                                </h3>\
+                                <a href="{{: tracks[0].url}}" class="track-name">{{: tracks[0].name}}</a>\
+                                <div class="artist-name">\
+                                    by <a href="{{: tracks[0].artist.url}}">\
+                                        {{: tracks[0].artist.name}}\
+                                    </a>\
+                                </div>\
+                                <div class="album-name">\
+                                    {{: tracks[0].album.name}}\
+                                </div>\
+                            </div>\
+	                    </div>\
+	                </div>\
+		        </div>\
+		        <div data-page-title class="hide">\
+		            {{: tracks[0].name}} by {{: tracks[0].artist.name}} (now playing)\
+		            {{: tracks[0].name}} by {{: tracks[0].artist.name}} (just listened)\
+		            {{: tracks[0].name}} by {{: tracks[0].artist.name}} (last played track)\
+		            No recent tracks - Last.fm\
+		        </div>\
+		        <div class="no-content-message hide">\
+		            Sorry, {{: _meta.subject.name}} hasn’t played any tracks recently.<br /><a href="{{: _meta.subject.url}}">Return to their profile</a>.\
+		        </div>\
+		    </div>\
+	    </div>'
 
 };
 
 
-pks.templates.init();
+pks.templates.init();;/* Pumpkin Seeds Global lastfms
+ * This Class is used to setup and initialize the core components
+ * @author Nichole Shannon
+ */
+
+/* Add Class to pks Namespace */
+pks.namespace('lastfm');
+
+
+pks.lastfm = {
+	init: function () {
+		if (pks.core.model.isClassReady) {
+			pks.lastfm.controller.events.classIsReady();
+		}
+		else {
+			$(document).on('pks.api:isReady', function () {
+				pks.lastfm.controller.events.classIsReady();
+			});
+		}
+	},
+	constants: {
+		requestParameters: {},
+		en_us:{}
+	},
+	model: {
+		isClassReady: false,
+		isModelReady: false,
+		jsonResponse: null,
+		isFormValid: false
+	},
+	controller: {
+		events: {
+			classIsReady: function () {
+				$(document).trigger('pks.lastfm:isReady');
+				pks.api.model.isClassReady = true;
+				pks.core.api.logger('Event: pks.lastfm:isReady');
+
+				pks.lastfm.view.init();
+			}
+		}
+	},
+	validation: null,
+	/** All public interface functions  */
+	/**
+	* This method constructs the URL used to request a REST service ?
+	* */
+	getLastfmAPI: function (apiURL, apiParams) {
+		var LASTFM_REST_URL = (apiURL)?apiURL:'api/lastfmapi',
+			params = (apiParams)?apiParams:'nowplaying.php/nikkidreams',
+			requestProtocol = 'http:',
+			requestHost = window.location.host,
+			pksLastfmURL,
+			formatedParamters = null;
+
+		if (window.location.protocol === 'http:') {
+			requestProtocol = 'http:';
+		} else {
+			requestProtocol = 'https:';
+		}
+
+		pksLastfmURL = requestProtocol + '//' + requestHost + '/' + LASTFM_REST_URL + '/' + params;
+		/*formatedParamters = pks.lastfm.getQueryParameters();
+		if (formatedParamters !== null) {
+			pksLastfmURL = pksLastfmURL + '?' + formatedParamters;
+		}
+		*/
+
+		$.get(pksLastfmURL).done(function(data){
+			pks.lastfm.model.jsonRespnse = data;
+			$(document).trigger('pks.lastfm:dataResponse:Ready');
+		});
+
+		//return pksLastfmURL;
+	},
+	view:{
+		init:function(){
+			pks.lastfm.view.displayCurrentSongPlaying();
+		},
+		displayCurrentSongPlaying : function(serName){
+			/*
+			
+			*/
+			pks.lastfm.getLastfmAPI();
+
+			$(document).on('pks.lastfm:dataResponse:Ready', function(){
+				var data = {
+					'_meta' : {
+						'subject' : {
+							'_type' : 'user',
+							'is_music' : false,
+							'name' : 'NikkiDreams',
+							'url' : '/user/NikkiDreams'
+						},
+						'url' : '/user/NikkiDreams/now'
+					},
+					'tracks': pks.lastfm.model.jsonRespnse,
+					'contentId': 'lastfm_current_song',
+					'extraStyle': 'col-md-offset-1 relative'
+				},
+					lastTemplate = $.templates(pks.templates.PKS_LASTFM_CURRENT_SONG_PLAYING),
+					html = lastTemplate.render(data),
+					contenId = 'pks_core_examples',
+					targetContainer = pks.api.createViewContainer(contenId,null,null);
+
+				$('#'+contenId+' > .row:first-child').append(html);
+			});
+		}
+	}
+
+};
+
+
+pks.lastfm.init();

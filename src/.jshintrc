@@ -33,6 +33,7 @@
 		"alt": true,
 		"plupload":true,
 		"err": true,
-		"Class": true
+		"Class": true,
+		"XDomainRequest":true
 	}
 }

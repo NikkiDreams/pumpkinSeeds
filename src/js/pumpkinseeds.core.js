@@ -109,8 +109,6 @@ pks.core = {
 					//TODO: Move this SOON - it's just temporary
 					var data = pks.core.model.jsonResponse;
 					pks.core.model.jsonResponse = data;
-					pks.api.prependApiDataObject(data, 'footer');
-					
 				},
 				exception: function () {
 					pks.core.model.isModelReady = false;
@@ -215,4 +213,8 @@ pks.core = {
 };
 
 pks.core.init();
+
+$.fn.exists = function () {
+	return jQuery(this).length > 0;
+};
 

@@ -48,7 +48,8 @@ module.exports = function(grunt) {
 	          '<%= pkg.directories.src.js %>/<%= pkg.name %>.core.js',
 	          '<%= pkg.directories.src.js %>/<%= pkg.name %>.core.config.js',
 	          '<%= pkg.directories.src.js %>/<%= pkg.name %>.api.js',
-	          '<%= pkg.directories.src.js %>/<%= pkg.name %>.templates.js'
+	          '<%= pkg.directories.src.js %>/<%= pkg.name %>.templates.js',
+	          '<%= pkg.directories.src.js %>/<%= pkg.name %>.lastfm.js'
 	        ],
 	        dest: '<%= pkg.directories.dist.loc %>/js/<%= pkg.name %>-dev-<%= pkg.version %>.js'
 	      }
@@ -99,7 +100,8 @@ module.exports = function(grunt) {
 						'<%= pkg.directories.src.js %>/<%= pkg.name %>.core.js',
 				        '<%= pkg.directories.src.js %>/<%= pkg.name %>.core.config.js',
 				        '<%= pkg.directories.src.js %>/<%= pkg.name %>.api.js',
-				        '<%= pkg.directories.src.js %>/<%= pkg.name %>.templates.js' 
+				        '<%= pkg.directories.src.js %>/<%= pkg.name %>.templates.js',
+				        '<%= pkg.directories.src.js %>/<%= pkg.name %>.lastfm.js'
 				        ]
 				},
 				options: {

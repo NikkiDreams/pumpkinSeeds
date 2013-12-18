@@ -20,7 +20,8 @@ pks.api = {
 	},
 	constants: {
 		requestParameters: {},
-		en_us:{}
+		en_us:{},
+		pks_base_container: '#pks_core_container'
 	},
 	model: {
 		isClassReady: false,
@@ -34,6 +35,10 @@ pks.api = {
 				$(document).trigger('pks.api:isReady');
 				pks.api.model.isClassReady = true;
 				pks.core.api.logger('Event: pks.api:isReady');
+				$(document).on('pks.core:isModelReady', function(){
+					pks.api.prependApiDataObject(pks.core.model.jsonResponse);
+				});
+				
 			}
 		}
 	},
@@ -76,30 +81,43 @@ pks.api = {
 
 		return pksCoreURL;
 	},
+	createViewContainer: function(id, styleClass, target){
+		var tObj = (target)?target:'#top_section',
+			baseId = (id)?id:'pks_core_container',
+			style = (styleClass)?' '+styleClass:'',
+			baseContainer = '\
+				<section class="container'+style+'" id="'+baseId+'">\
+					<div class="row"></div>\
+				</section>';
+		
+		if( $(tObj).exists() && !$('#'+baseId).exists() ){
+			$(tObj).after(baseContainer);
+			return true;
+		}
+		else if( !$(tObj).exists() ){
+			return false;
+		}
+		return true;
+	},
 	/* Sample API Call to destroy and rewrite the initial API Core JSON Sample */
-	prependApiDataObject:function(data, obj){
-		//TODO: JS Templatize this using JSViews or Handlebars
-		var content = '<section class="container" id="pks_core_JSON_sample"><div class="row-fluid"><div class="content span10">\
-			<h2>PKS Core JSON Response</h2>\
-			<label>API Name: ' + data.API + '</label>\
-			<label>API Version: ' + data.version + '</label>\
-			<h5>Sample Data: '+ pks.core.config.constants.PUMPKINSEEDS_JSON_DATA +'</h5>\
-			<label>data.geolocation.country.USA.states:<br/><pre>' + JSON.stringify(data.geolocation.country.USA.states) + '</pre></label>\
-			<label>data.user.identity:<br/><pre>' + JSON.stringify(data.user.identity) + '</pre></label>\
-			<label>data.user.orientation:<br/><pre>' + JSON.stringify(data.user.orientation) + '</pre></label>\
-			<label>data.user.status:<br/><pre>' + JSON.stringify(data.user.status) + '</pre></label>\
-			</div></div></section>';
+	prependApiDataObject:function(model){
+		var data =  {
+				'API': model.API,
+				'version': model.version,
+				'seed_name': pks.core.config.constants.PUMPKINSEEDS_JSON_DATA,
+				'geolocation': JSON.stringify(model.geolocation.country.USA.states),
+				'identity': JSON.stringify(model.user.identity),
+				'orientation': JSON.stringify(model.user.orientation),
+				'status': JSON.stringify(model.user.status),
+				'contentId': 'api_json_data',
+				'extraStyle': ''
+			},
+			myTemplate = $.templates(pks.templates.PKS_API_DATA_SAMPLE_SECTION),
+			html = myTemplate.render(data),
+			containerId = 'pks_core_examples',
+			targetContainer = pks.api.createViewContainer(containerId,null,null);
 
-		if( document.getElementById('pks_core_JSON_sample') ){
-			$('#pks_core_JSON_sample').fadeOut('slow', function(){
-				$(this).remove();
-				$(obj).before(content);
-			});
-		}
-		else{
-			$(obj).before(content);
-		}
-
+		$('#'+containerId+' > .row:first-child').prepend(html);
 		pks.core.api.logger('API: pks.prependApiDataObject');
 	}
 

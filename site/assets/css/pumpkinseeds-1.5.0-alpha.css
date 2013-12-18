@@ -1,6 +1,6 @@
 /*!
  * Pumpkin Seeds Version 1.5.0-alpha
- * Based on Bootstrap v2.2.2
+ * Based on Bootstrap v3.0.+
  *
  * Copyright 2012 NikkiDreams.com
  *
@@ -3169,7 +3169,7 @@ output {
   padding-top: 7px;
   font-size: 14px;
   line-height: 1.428571429;
-  color: #555555;
+  color: #606060;
   vertical-align: middle;
 }
 .form-control {
@@ -3179,7 +3179,7 @@ output {
   padding: 6px 12px;
   font-size: 14px;
   line-height: 1.428571429;
-  color: #555555;
+  color: #606060;
   vertical-align: middle;
   background-color: #ffffff;
   background-image: none;
@@ -4864,7 +4864,7 @@ textarea.input-group-sm > .input-group-btn > .btn {
   font-size: 14px;
   font-weight: normal;
   line-height: 1;
-  color: #555555;
+  color: #606060;
   text-align: center;
   background-color: #eeeeee;
   border: 1px solid #cccccc;
@@ -5019,7 +5019,7 @@ textarea.input-group-sm > .input-group-btn > .btn {
 .nav-tabs > li.active > a,
 .nav-tabs > li.active > a:hover,
 .nav-tabs > li.active > a:focus {
-  color: #555555;
+  color: #606060;
   background-color: #ffffff;
   border: 1px solid #dddddd;
   border-bottom-color: transparent;
@@ -7111,6 +7111,246 @@ button.close {
     bottom: 20px;
   }
 }
+/* Core CSS customizations and defenitions */
+/*!
+ * Pumpkin Seeds Version 1.5.0-alpha
+ * Core Defenitions
+ *
+ * Copyright 2012 NikkiDreams.com
+ * author: @Nichole Shannon
+ */
+body {
+  background: #fff;
+  font-size: 12px;
+  font-family: 'Oxygen', sans-serif;
+  color: #242424;
+  height: auto;
+  margin-top: 110px;
+  margin-bottom: 40px;
+  padding: 0;
+  letter-spacing: 1px;
+}
+header {
+  color: #fff;
+  background-color: #FFA600;
+  height: auto;
+  position: fixed;
+  z-index: 2;
+  top: 0;
+  width: 100%;
+  padding: 20px 20px 0;
+}
+footer {
+  color: #fff;
+  background-color: #000;
+  height: auto;
+  position: fixed;
+  bottom: 0px;
+  width: 100%;
+  margin: 60px 0 0 0;
+  padding: 20px;
+  border-top: 3px solid #471001;
+}
+h1,
+h2 {
+  font-family: 'Ubuntu', sans-serif;
+  margin: 0 0 20px 0;
+  letter-spacing: 1px;
+}
+h1,
+h2,
+h3 {
+  line-height: 30px;
+}
+h1 {
+  font-weight: bold;
+  font-size: 52px;
+  color: #fff;
+  text-shadow: 2px 2px rgba(0, 0, 0, 0.6);
+}
+header > h1 {
+  transition: letter-spacing 2s ease-in-out;
+  -moz-transition: letter-spacing 2s ease-in-out;
+  /* Firefox 4 */
+
+  -webkit-transition: letter-spacing 2s ease-in-out;
+  /* Safari and Chrome */
+
+  -o-transition: letter-spacing 2s ease-in-out;
+  /* Opera */
+
+  letter-spacing: 1px;
+}
+header > h1:hover {
+  letter-spacing: 8px;
+}
+h2 {
+  font-weight: bold;
+  font-size: 26px;
+  color: #241F1D;
+  text-shadow: 1px 1px rgba(255, 166, 100, 0.4);
+}
+p {
+  margin: 10px 0;
+  font-size: 12px;
+  color: #4a4a4a;
+}
+button {
+  clear: both;
+  margin: 10px;
+}
+.wrapper {
+  width: 1170px;
+  margin: 20px auto;
+}
+.content {
+  position: relative;
+  border-radius: 8px;
+  border: 2px solid #000;
+  padding: 20px;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  -moz-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.7);
+  -webkit-box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.7);
+  box-shadow: 5px 5px 5px rgba(0, 0, 0, 0.7);
+  background: #fff;
+  overflow: hidden;
+}
+header > .navbar-inverse {
+  margin-bottom: 0;
+  margin-left: -20px;
+  margin-right: -20px;
+  border-radius: 0;
+  border-top: 1px solid #9C2200;
+  border-bottom: 3px solid #471001;
+}
+header > .navbar-header {
+  display: inline-block;
+}
+header > .navbar-inverse .navbar-brand {
+  display: inline-block;
+  float: left;
+  padding-top: 15px;
+  font-size: 14px;
+  color: #704100;
+  margin-right: 10px;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.1), 0 0 30px rgba(255, 255, 255, 0.125);
+  transition: all 0.2s linear 0s;
+}
+header > .navbarinverse > .navbar-collapse {
+  z-index: 5;
+}
+header > .navbar-inverse .nav > li > a {
+  font-size: 14px;
+}
+.logWrapper {
+  height: 200px;
+  overflow: auto;
+}
+.log.info {
+  font-size: 9px;
+  letter-spacing: 0;
+  color: #8AC900;
+  line-height: 12px;
+}
+.logo {
+  z-index: 4;
+  position: relative;
+  display: inline-block;
+  margin-right: 20px;
+}
+.logo > img {
+  border: 2px solid #471001;
+}
+.full-width-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+}
+.nowPlayingBg {
+  z-index: 1;
+}
+.track-details-wrapper {
+  z-index: 2;
+  position: relative;
+  top: 0;
+  left: 0;
+  color: #ffffff;
+}
+.art {
+  position: fixed;
+  top: -40px;
+  bottom: -40px;
+  right: -40px;
+  left: -40px;
+  background-size: cover;
+  background-position: center;
+}
+.cssBGfilters {
+  -webkit-filter: blur(25px);
+  -moz-filter: blur(25px);
+  filter: blur(25px);
+  opacity: 0.8;
+}
+@media (max-width: 960px) {
+  header > .navbar-inverse .navbar-toggle {
+    display: inline-block;
+    float: left;
+    clear: none;
+    margin-right: 20px;
+    margin-left: 20px;
+  }
+}
+@media (min-width: 768px) and (max-width: 960px) {
+  header > h1 {
+    font-size: 40px;
+  }
+  header > h1:hover {
+    letter-spacing: 4px;
+  }
+  header > .navbar-inverse .navbar-brand {
+    height: 40px;
+  }
+}
+@media (max-width: 800px) {
+  header > h1 {
+    font-size: 38px;
+  }
+  header > h1:hover {
+    letter-spacing: 2px;
+  }
+}
+@media (max-width: 768px) {
+  header > h1 {
+    font-size: 32px;
+  }
+  header > h1:hover {
+    letter-spacing: 2px;
+  }
+  header > .navbar-inverse .navbar-brand {
+    width: 200px;
+    height: 34px;
+    overflow: hidden;
+  }
+}
+@media (max-width: 630px) {
+  header > h1 {
+    font-size: 20px;
+  }
+  header > h1:hover {
+    letter-spacing: 1px;
+  }
+}
+@media (max-width: 470px) {
+  body {
+    margin-top: 150px;
+  }
+  header > .navbar-inverse {
+    clear: both;
+  }
+}
 /***********************************************
 * Utility classes ******************************
 * NEVER import any classes AFTER this.
@@ -7571,4 +7811,32 @@ td.visible-print {
   td.hidden-print {
     display: none !important;
   }
+}
+/* Heigh is needed to make this work 
+.absolute-center {
+  margin: auto;
+  position: absolute;
+  top: 0; left: 0; bottom: 0; right: 0;
+}
+*/
+.absolute-center {
+  width: 50%;
+  height: 50%;
+  overflow: auto;
+  margin: auto;
+  position: absolute;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  right: 0;
+}
+.absolute-center.isResponsive {
+  width: 60%;
+  height: 60%;
+  min-width: 200px;
+  max-width: 400px;
+  padding: 40px;
+}
+.relative {
+  position: relative;
 }
