@@ -1,6 +1,6 @@
 ## Pumkin Seeds
 ===========
-### I am actively working on MAJOR updates for version 1.5.0
+### I have decided to retire PumpkinSeeds. There are so many amazing frameworks out there that I would rather focaus on. My interests are oriented towards NodeJS frameworks these days. This has been an interesting exercise for me and still acts as a simple and basic example of how one "might" develop a flexible front-end scafolding that is not completely dependant on any one backend technology or framwwork. 
 
 A Basic Event Driven JS Framework to get any website going fast. It's just a scaffolding using various popular and solid Web technologies I use often.
 
